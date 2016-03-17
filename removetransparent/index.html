@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<style>
+    img, button, canvas {
+        float: left;
+    }
+
+    img, canvas {
+        background-color: #ccc;
+    }
+</style>
+<body>
+<div>
+    <img id="img" src="normal.png" alt="">
+    <button id="crop">裁切透明区域</button>
+    <img id="dst" src="" alt="">
+</div>
+<script>
+    function RemoveTransparent(image) {
+        //裁切出图像的非透明区域
+        //收缩图片的4条边，直到碰到非透明像素，裁切出非透明部分
+        var offCanvas = document.createElement("canvas");//用于选取非透明部分
+        offCanvas.width = image.width;
+        offCanvas.height = image.height;
+        var offCtx = offCanvas.getContext("2d");
+        offCtx.drawImage(image, 0, 0);
+        this.srcImgData = offCtx.getImageData(0, 0, image.width, image.height);
+        var top = this._geOpaqueAreaTop();
+        var bottom = this._getOpaqueAreaBottom();
+        if (top > bottom) {
+            //全透明图片
+            this.imgInfo = {top: 0, left: 0, width: 0, height: -1, base64: ""};
+        } else {
+            var left = this._getOpaqueAreaLeft(top, bottom);
+            var right = this._getOpaqueAreaRight(top, bottom);
+            this.imgInfo = {top: top, left: left, width: right - left, height: bottom - top};
+
+            var dstCan = document.createElement("canvas"); //用于保存成新图片
+            dstCan.width = this.imgInfo.width;
+            dstCan.height = this.imgInfo.height;
+            var dstCTX = dstCan.getContext("2d");
+            var dstWidth = this.imgInfo.width, dstHeight = this.imgInfo.height;
+            dstCTX.drawImage(image, left, top, dstWidth, dstHeight,
+                    0, 0, dstWidth, dstHeight);
+            this.imgInfo.base64 = dstCan.toDataURL("image/png");
+        }
+    }
+    Object.assign(RemoveTransparent.prototype, {
+        getImgInfo        : function () {
+            return this.imgInfo
+        },
+        //取图片非透明区域的上边缘
+        _geOpaqueAreaTop    : function () {
+            var srcImgData = this.srcImgData;
+            var height = srcImgData.height;
+            for (var i = 0; i < height; i++) {
+                if (this._haveOpaquePixRow(i, srcImgData)) {
+                    return i;
+                }
+            }
+            return height;
+        },
+        //取图片非透明区域的左边缘
+        _getOpaqueAreaLeft  : function (top, bottom) {
+            var srcImgData = this.srcImgData;
+            var width = srcImgData.width;
+            for (var i = 0; i < width; i++) {
+                if (this._haveOpaquePixCol(i, srcImgData, top, bottom + 1)) {
+                    return i;
+                }
+            }
+            return width;
+        },
+        //取图片非透明区域的下边缘
+        _getOpaqueAreaBottom: function () {
+            var srcImgData = this.srcImgData;
+            var height = srcImgData.height;
+            for (var i = height - 1; i > 0; i--) {
+                if (this._haveOpaquePixRow(i, srcImgData)) {
+                    return i;
+                }
+            }
+            return 0;
+        },
+        //取图片非透明区域的右边缘
+        _getOpaqueAreaRight : function (top, bottom) {
+            var srcImgData = this.srcImgData;
+            var width = srcImgData.width;
+            for (var i = width - 1; i > 0; i--) {
+                if (this._haveOpaquePixCol(i, srcImgData, top, bottom + 1)) {
+                    return i;
+                }
+            }
+            return 0;
+        },
+        //判断一行是否有不透明像素
+        _haveOpaquePixRow   : function (line, imgData) {
+            var width = imgData.width;
+            if (line >= imgData.height) {
+                throw "par error"
+            }
+            var start = width * 4 * line;
+            var end = width * 4 * line + width * 4;
+            var data = imgData.data;
+            for (var i = start; i < end; i += 4) {
+                var alpha = data[i];
+                if (alpha != 0) {
+                    return true;
+                }
+            }
+            return false;
+        },
+        //判断一列是否有不透明像素,高度区域为(startRow, endRow)
+        _haveOpaquePixCol: function (col, imgData, startRow, endRow) {
+            var width = imgData.width;
+            var data = imgData.data;
+            for (i = startRow; i < endRow; i++) {
+                var rowStart = width * 4 * i;
+                var alpha = data[rowStart + col * 4];
+                if (alpha != 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    });
+
+
+    var btn = document.getElementById("crop");
+    btn.addEventListener("click", function () {
+        var image = document.getElementById("img");
+        var targetImage = new RemoveTransparent(image);
+        var dst = document.getElementById("dst");
+        dst.src = targetImage.getImgInfo().base64;
+
+    });
+
+</script>
+</body>
+</html>

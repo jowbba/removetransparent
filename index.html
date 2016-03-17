@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<audio id="t1" src="http://ac-hf3jpeco.clouddn.com/bed3dbebf579cc7e95ac.mp3" controls="controls">
+    Your browser does not support the audio element.
+</audio>
+<script>
+    var obj=document.getElementById("t1");
+  
+        obj.onloadedmetadata=function(){
+            console.log("onloadedmetadata",obj.duration);
+        }
+ 
+//    window.onload=function (){
+//        var obj=document.getElementById("t1");
+//        if(obj.duration){
+//            console.log("ori",obj.duration);
+//        }else{
+//            obj.onloadedmetadata=function(){
+//                console.log("onloadedmetadata",obj.duration);
+//            }
+//        }
+//
+//    }
+
+</script>
+</body>
+</html>
