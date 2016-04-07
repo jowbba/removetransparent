@@ -1,3 +1,3 @@
 # removetransparent
 remove transparent part of png
-use canvas
+using canvas
